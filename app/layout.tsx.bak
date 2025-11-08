@@ -1,0 +1,138 @@
+import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/next'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { LanguageProvider } from '@/contexts/language-context'
+import { AuthProvider } from '@/contexts/auth-context'
+import { WishlistProvider } from '@/contexts/wishlist-context'
+import { FloatingWhatsApp } from '@/components/floating-whatsapp'
+import { Suspense } from 'react'
+import { inter, notoSans, almarai } from '@/lib/fonts'
+import { theme } from '@/lib/theme'
+import './globals.css'
+
+export const metadata: Metadata = {
+  title: 'Khanana - Traditional Pashtun Clothing & Accessories',
+  description: 'Discover authentic Pashtun and Pakistani traditional clothing including Chadar, Pakol, and Chitrali Caps. Handcrafted with love from Peshawar, Pakistan.',
+  keywords: ['Pashtun clothing', 'Peshawari shawls', 'Chitrali caps', 'Pakol', 'Traditional Pakistani wear', 'Handmade accessories'],
+  themeColor: theme.colors.primary.darkGreen,
+  viewport: 'width=device-width, initial-scale=1',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  openGraph: {
+    title: 'Khanana - Traditional Pashtun Clothing & Accessories',
+    description: 'Discover authentic Pashtun and Pakistani traditional clothing including Chadar, Pakol, and Chitrali Caps.',
+    images: ['/og-image.jpg'],
+  },
+}
+  subsets: ["arabic"],
+  variable: "--font-display",
+  display: "swap",
+})
+
+export const metadata: Metadata = {
+  title: "Khanana - Traditional Pashtun Clothing & Accessories",
+  description:
+    "Discover authentic Pashtun and Pakistani traditional clothing including Chadar, Pakol, and Chitrali Caps. Handcrafted with love from Peshawar, Pakistan.",
+  keywords: [
+    "Pashtun clothing",
+    "Peshawari shawls",
+    "Chitrali caps",
+    "Pakol",
+    "Traditional Pakistani wear",
+    "Handmade accessories",
+  ],
+  themeColor: theme.colors.primary.darkGreen,
+  viewport: "width=device-width, initial-scale=1",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "Khanana - Traditional Pashtun Clothing & Accessories",
+    description:
+      "Discover authentic Pashtun and Pakistani traditional clothing including Chadar, Pakol, and Chitrali Caps.",
+    images: ["/og-image.jpg"],
+  },
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" dir="ltr" className={`${inter.variable} ${notoSans.variable} ${almarai.variable}`}>
+      <head>
+        {/* Preload critical fonts */}
+        <link
+          rel="preload"
+          href="/fonts/NotoNastaliqUrdu-VariableFont_wght.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        {/* Add structured data for better SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Store',
+              name: 'Khanana',
+              description: 'Authentic Pashtun and Pakistani traditional clothing and accessories.',
+              url: 'https://khanana.com',
+              logo: 'https://khanana.com/logo.png',
+              address: {
+                '@type': 'PostalAddress',
+                addressLocality: 'Peshawar',
+                addressRegion: 'Khyber Pakhtunkhwa',
+                addressCountry: 'PK',
+              },
+              priceRange: '$$',
+              hasOfferCatalog: {
+                '@type': 'OfferCatalog',
+                name: 'Traditional Clothing',
+                itemListElement: [
+                  {
+                    '@type': 'OfferCatalog',
+                    name: 'Shawls & Chadar',
+                  },
+                  {
+                    '@type': 'OfferCatalog',
+                    name: 'Pakol & Caps',
+                  },
+                  {
+                    '@type': 'OfferCatalog',
+                    name: 'Accessories',
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+      </head>
+      <body className={`font-sans antialiased bg-${theme.colors.background.light} text-${theme.colors.text.primary}`}>
+        <AuthProvider>
+          <LanguageProvider>
+            <WishlistProvider>
+              <div className="min-h-screen flex flex-col">
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Navbar />
+                </Suspense>
+                <main className="flex-1">{children}</main>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Footer />
+                </Suspense>
+                <FloatingWhatsApp />
+              </div>
+            </WishlistProvider>
+          </LanguageProvider>
+        </AuthProvider>
+        <Analytics />
+      </body>
+    </html>
+  )
+}
