@@ -10,7 +10,9 @@ datasource db {
 model Product {
   id                 String   @id @default(cuid())
   name               String
+  nameAr             String?
   description        String
+  descriptionAr      String?
   originalPrice      Float
   discountedPrice    Float
   discountPercentage Int
@@ -28,6 +30,7 @@ model Review {
   name      String
   rating    Int
   text      String
+  textUr    String?
   date      DateTime @default(now())
   verified  Boolean  @default(false)
   photo     String?
