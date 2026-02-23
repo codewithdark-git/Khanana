@@ -13,10 +13,19 @@ export default function HomePage() {
   const [heroImage, setHeroImage] = useState<string | null>(null)
 
   useEffect(() => {
-    const savedHeroImage = localStorage.getItem("heroImage")
-    if (savedHeroImage) {
-      setHeroImage(savedHeroImage)
+    // Fetch from API instead of localStorage
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/settings")
+        const data = await res.json()
+        if (data.success && data.data.heroImage) {
+          setHeroImage(data.data.heroImage)
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings:", error)
+      }
     }
+    fetchSettings()
   }, [])
 
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])

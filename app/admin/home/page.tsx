@@ -11,30 +11,50 @@ import { toast } from "sonner"
 export default function AdminHomePage() {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
-        heroImage: "/placeholder.svg",
+        heroImage: "",
     })
 
     useEffect(() => {
-        const saved = localStorage.getItem("heroImage")
-        if (saved) {
-            setFormData({ heroImage: saved })
+        // Fetch from API instead of localStorage
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/settings")
+                const data = await res.json()
+                if (data.success && data.data.heroImage) {
+                    setFormData({ heroImage: data.data.heroImage })
+                }
+            } catch (error) {
+                console.error("Failed to fetch settings:", error)
+            }
         }
+        fetchSettings()
     }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
-        // Simulate API call
-        setTimeout(() => {
-            localStorage.setItem("heroImage", formData.heroImage)
+        try {
+            const res = await fetch("/api/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ heroImage: formData.heroImage })
+            })
+            const data = await res.json()
+            if (data.success) {
+                toast.success("Home page image updated successfully!")
+            } else {
+                toast.error("Failed to update image")
+            }
+        } catch (error) {
+            toast.error("Failed to update image")
+        } finally {
             setLoading(false)
-            toast.success("Home page image updated successfully!")
-        }, 500)
+        }
     }
 
     return (

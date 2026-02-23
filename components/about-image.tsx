@@ -7,10 +7,19 @@ export function AboutImage() {
     const [aboutImage, setAboutImage] = useState<string | null>(null)
 
     useEffect(() => {
-        const saved = localStorage.getItem("aboutImage")
-        if (saved) {
-            setAboutImage(saved)
+        // Fetch from API instead of localStorage
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/settings")
+                const data = await res.json()
+                if (data.success && data.data.aboutImage) {
+                    setAboutImage(data.data.aboutImage)
+                }
+            } catch (error) {
+                console.error("Failed to fetch settings:", error)
+            }
         }
+        fetchSettings()
     }, [])
 
     if (aboutImage) {

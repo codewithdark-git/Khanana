@@ -11,30 +11,50 @@ import { toast } from "sonner"
 export default function AdminAboutPage() {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
-        imageUrl: "/placeholder.svg",
+        imageUrl: "",
     })
 
     useEffect(() => {
-        const saved = localStorage.getItem("aboutImage")
-        if (saved) {
-            setFormData({ imageUrl: saved })
+        // Fetch from API instead of localStorage
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/settings")
+                const data = await res.json()
+                if (data.success && data.data.aboutImage) {
+                    setFormData({ imageUrl: data.data.aboutImage })
+                }
+            } catch (error) {
+                console.error("Failed to fetch settings:", error)
+            }
         }
+        fetchSettings()
     }, [])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
-        // Simulate API call
-        setTimeout(() => {
-            localStorage.setItem("aboutImage", formData.imageUrl)
+        try {
+            const res = await fetch("/api/settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ aboutImage: formData.imageUrl })
+            })
+            const data = await res.json()
+            if (data.success) {
+                toast.success("About page image updated successfully!")
+            } else {
+                toast.error("Failed to update image")
+            }
+        } catch (error) {
+            toast.error("Failed to update image")
+        } finally {
             setLoading(false)
-            toast.success("About page image updated successfully!")
-        }, 1000)
+        }
     }
 
     return (
