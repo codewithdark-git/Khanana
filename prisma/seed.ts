@@ -30,9 +30,10 @@ async function main() {
                     originalPrice: product.originalPrice,
                     discountedPrice: product.discountedPrice,
                     discountPercentage: product.discountPercentage,
-                    image: product.image,
+                    images: product.images || [],
                     imageAlt: product.imageAlt,
                     style: product.style,
+                    category: product.category,
                     tiktokUrl: product.tiktokUrl,
                     featured: product.featured,
                 }

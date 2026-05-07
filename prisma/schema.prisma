@@ -16,13 +16,14 @@ model Product {
   originalPrice      Float
   discountedPrice    Float
   discountPercentage Int
-  image              String
-  imageAlt           String
+  images             String[]
+  imageAlt           String?
   style              String
   tiktokUrl          String?
   featured           Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  category           String   @default("shawl")
 }
 
 model Review {
@@ -41,7 +42,7 @@ model Review {
 
 model Media {
   id        String   @id @default(cuid())
-  url       String   @db.Text
+  url       String
   type      String   @default("image")
   name      String?
   createdAt DateTime @default(now())
@@ -66,7 +67,7 @@ model Order {
 
 model SiteSettings {
   id         String   @id @default("site_settings")
-  heroImage  String?
+  heroImages String[] @default([])
   aboutImage String?
   updatedAt  DateTime @updatedAt
 }

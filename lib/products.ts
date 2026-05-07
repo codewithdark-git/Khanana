@@ -5,9 +5,10 @@ export interface Product {
   originalPrice: number
   discountedPrice: number
   discountPercentage: number
-  image: string
+  images: string[]
   imageAlt: string
   style: string
+  category: "shawl" | "cloth" | "chappal"
   tiktokUrl?: string
   featured: boolean
 }
@@ -21,9 +22,10 @@ export const products: Product[] = [
     originalPrice: 8550,
     discountedPrice: 5985,
     discountPercentage: 30,
-    image: "/black-pathan-shawl-elegant-box.jpg",
+    images: ["/black-pathan-shawl-elegant-box.jpg"],
     imageAlt: "Jet Black Pathan Shawl",
     style: "Jet Black",
+    category: "shawl",
     featured: true,
   },
   {
@@ -34,9 +36,10 @@ export const products: Product[] = [
     originalPrice: 7000,
     discountedPrice: 4900,
     discountPercentage: 30,
-    image: "/man-in-blue-attire-with-black-pathan-shawl-draped.jpg",
+    images: ["/man-in-blue-attire-with-black-pathan-shawl-draped.jpg"],
     imageAlt: "Classic Wool Pathan Shawl",
     style: "Classic Wool",
+    category: "shawl",
     featured: true,
   },
   {
@@ -47,9 +50,10 @@ export const products: Product[] = [
     originalPrice: 4999,
     discountedPrice: 2500,
     discountPercentage: 50,
-    image: "/man-in-white-fringed-pathan-shawl-seated.jpg",
+    images: ["/man-in-white-fringed-pathan-shawl-seated.jpg"],
     imageAlt: "Fringed Soft Pathan Shawl",
     style: "Fringed",
+    category: "shawl",
     featured: true,
   },
   {
@@ -60,9 +64,10 @@ export const products: Product[] = [
     originalPrice: 6500,
     discountedPrice: 4550,
     discountPercentage: 30,
-    image: "/man-in-gray-pathan-shawl-with-subtle-patterns.jpg",
+    images: ["/man-in-gray-pathan-shawl-with-subtle-patterns.jpg"],
     imageAlt: "Heritage Gray Pathan Shawl",
     style: "Heritage Gray",
+    category: "shawl",
     featured: false,
   },
   {
@@ -73,9 +78,10 @@ export const products: Product[] = [
     originalPrice: 7200,
     discountedPrice: 5040,
     discountPercentage: 30,
-    image: "/brown-earth-tone-pathan-shawl-traditional.jpg",
+    images: ["/brown-earth-tone-pathan-shawl-traditional.jpg"],
     imageAlt: "Brown Earth Pathan Shawl",
     style: "Brown Earth",
+    category: "shawl",
     featured: false,
   },
   {
@@ -85,9 +91,10 @@ export const products: Product[] = [
     originalPrice: 7500,
     discountedPrice: 5250,
     discountPercentage: 30,
-    image: "/navy-wool-pathan-shawl-sophisticated.jpg",
+    images: ["/navy-wool-pathan-shawl-sophisticated.jpg"],
     imageAlt: "Navy Wool Pathan Shawl",
     style: "Navy Wool",
+    category: "shawl",
     featured: false,
   },
   {
@@ -97,9 +104,10 @@ export const products: Product[] = [
     originalPrice: 6800,
     discountedPrice: 4760,
     discountPercentage: 30,
-    image: "/camel-tone-pathan-shawl-with-fringe.jpg",
+    images: ["/camel-tone-pathan-shawl-with-fringe.jpg"],
     imageAlt: "Camel Fringe Pathan Shawl",
     style: "Camel Fringe",
+    category: "shawl",
     featured: false,
   },
   {
@@ -110,9 +118,66 @@ export const products: Product[] = [
     originalPrice: 9200,
     discountedPrice: 6440,
     discountPercentage: 30,
-    image: "/charcoal-luxury-pathan-shawl-premium.jpg",
+    images: ["/charcoal-luxury-pathan-shawl-premium.jpg"],
     imageAlt: "Charcoal Luxe Pathan Shawl",
     style: "Charcoal Luxe",
+    category: "shawl",
     featured: true,
+  },
+  {
+    id: "khaddar-premium",
+    name: "Premium Khaddar Suiting",
+    description:
+      "Finest handwoven khaddar fabric from Khyber Pakhtunkhwa. Perfect unstitched suiting for traditional and modern wear.",
+    originalPrice: 5500,
+    discountedPrice: 3850,
+    discountPercentage: 30,
+    images: [],
+    imageAlt: "Premium Khaddar Suiting Cloth",
+    style: "Khaddar",
+    category: "cloth",
+    featured: true,
+  },
+  {
+    id: "cotton-blend-suiting",
+    name: "Traditional Cotton Blend",
+    description:
+      "Soft cotton blend unstitched fabric with a traditional weave. Ideal for everyday shalwar kameez in all seasons.",
+    originalPrice: 3800,
+    discountedPrice: 2660,
+    discountPercentage: 30,
+    images: [],
+    imageAlt: "Traditional Cotton Blend Fabric",
+    style: "Cotton Blend",
+    category: "cloth",
+    featured: false,
+  },
+  {
+    id: "peshawari-classic",
+    name: "Peshawari Classic Chappal",
+    description:
+      "Iconic Peshawari chappal handcrafted from genuine leather. Lightweight, durable, and timelessly stylish.",
+    originalPrice: 4500,
+    discountedPrice: 3150,
+    discountPercentage: 30,
+    images: [],
+    imageAlt: "Classic Peshawari Chappal",
+    style: "Peshawari Classic",
+    category: "chappal",
+    featured: true,
+  },
+  {
+    id: "norozi-chappal",
+    name: "Norozi Chappal",
+    description:
+      "Traditional Norozi chappal with intricate leather work and brass details. A symbol of Pashtun heritage and pride.",
+    originalPrice: 5200,
+    discountedPrice: 3640,
+    discountPercentage: 30,
+    images: [],
+    imageAlt: "Norozi Chappal Traditional",
+    style: "Norozi",
+    category: "chappal",
+    featured: false,
   },
 ]

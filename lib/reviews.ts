@@ -3,7 +3,7 @@ export interface Review {
   name: string
   rating: number
   text: string
-  text: string
+  textUr?: string
   date: string
   verified: boolean
   photo?: string
