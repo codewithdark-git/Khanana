@@ -82,7 +82,7 @@ export default function ProductDetailPage() {
   }
 
   const whatsappMessage = `Hi! I'm interested in the ${product.name} (Rs ${product.discountedPrice}). Can you provide more details?`
-  const productImages = product.image ? [product.image] : []
+  const productImages = product.images || []
 
   return (
     <div className="min-h-screen bg-background">

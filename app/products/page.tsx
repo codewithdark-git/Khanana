@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { ProductCard } from "@/components/product-card"
 import type { Product } from "@/lib/products"
 import { Button } from "@/components/ui/button"
@@ -14,19 +15,54 @@ const PRICE_RANGES = [
   { label: "Above Rs 7,000", min: 7000, max: Number.POSITIVE_INFINITY },
 ]
 
+const CATEGORIES = [
+  { key: null, label: "All Products" },
+  { key: "shawl", label: "Shawls" },
+  { key: "cloth", label: "Cloth" },
+  { key: "chappal", label: "Chappal" },
+]
+
+const CATEGORY_DISPLAY: Record<string, { title: string; description: string }> = {
+  shawl: {
+    title: "Khanana Shawls",
+    description: "Authentic handwoven Pathan shawls from master weavers of KPK",
+  },
+  cloth: {
+    title: "Khanana Cloth Collection",
+    description: "Premium khaddar & suiting cloth, unstitched & ready to craft",
+  },
+  chappal: {
+    title: "Khanana Chappal",
+    description: "Handmade Peshawari chappal, timeless and comfortable",
+  },
+}
+
 export default function ProductsPage() {
+  const searchParams = useSearchParams()
+  const categoryFromUrl = searchParams.get("category")
+
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryFromUrl)
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null)
   const [selectedPriceRange, setSelectedPriceRange] = useState<(typeof PRICE_RANGES)[0] | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Sync category from URL
+  useEffect(() => {
+    setSelectedCategory(categoryFromUrl)
+  }, [categoryFromUrl])
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products")
+        setIsLoading(true)
+        const url = selectedCategory
+          ? `/api/products?category=${selectedCategory}`
+          : "/api/products"
+        const response = await fetch(url)
         const data = await response.json()
         if (data.success) {
           setProducts(data.data)
@@ -39,7 +75,7 @@ export default function ProductsPage() {
       }
     }
     fetchProducts()
-  }, [])
+  }, [selectedCategory])
 
   useEffect(() => {
     let filtered = products
@@ -73,6 +109,14 @@ export default function ProductsPage() {
     setSearchQuery("")
   }
 
+  const pageTitle = selectedCategory && CATEGORY_DISPLAY[selectedCategory]
+    ? CATEGORY_DISPLAY[selectedCategory].title
+    : "Khanana Collection"
+
+  const pageDescription = selectedCategory && CATEGORY_DISPLAY[selectedCategory]
+    ? CATEGORY_DISPLAY[selectedCategory].description
+    : "Discover our authentic collection of Pashtun heritage products"
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background py-8 sm:py-12 lg:py-20">
@@ -95,15 +139,36 @@ export default function ProductsPage() {
             Our Collection
           </span>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-serif font-bold text-foreground mb-2 sm:mb-3 lg:mb-4">
-            Khanana Pathan Shawls
+            {pageTitle}
           </h1>
           <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-            Discover our authentic collection of handwoven Pathan shawls, crafted with traditional Pashtun artistry
+            {pageDescription}
           </p>
         </div>
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+        {/* Category Tabs */}
+        <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
+          {CATEGORIES.map((cat) => (
+            <Button
+              key={cat.label}
+              variant={selectedCategory === cat.key ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setSelectedCategory(cat.key)
+                // Update URL without full page reload
+                const url = cat.key ? `/products?category=${cat.key}` : "/products"
+                window.history.pushState({}, "", url)
+              }}
+              className={`text-xs sm:text-sm h-8 sm:h-9 ${selectedCategory === cat.key ? "bg-primary text-primary-foreground" : ""
+                }`}
+            >
+              {cat.label}
+            </Button>
+          ))}
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
           {/* Search Input */}
           <div className="relative flex-1">

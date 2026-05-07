@@ -35,12 +35,12 @@ export async function PUT(request: NextRequest) {
         const settings = await prisma.siteSettings.upsert({
             where: { id: SETTINGS_ID },
             update: {
-                heroImage: data.heroImage,
+                heroImages: data.heroImages || [],
                 aboutImage: data.aboutImage,
             },
             create: {
                 id: SETTINGS_ID,
-                heroImage: data.heroImage,
+                heroImages: data.heroImages || [],
                 aboutImage: data.aboutImage,
             }
         })

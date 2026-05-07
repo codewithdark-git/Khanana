@@ -47,9 +47,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         originalPrice: Number(data.originalPrice),
         discountedPrice: Number(data.discountedPrice),
         discountPercentage: Number(data.discountPercentage),
-        image: data.image,
+        images: data.images || [],
         imageAlt: data.imageAlt,
         style: data.style,
+        category: data.category,
         tiktokUrl: data.tiktokUrl,
         featured: data.featured,
       }
