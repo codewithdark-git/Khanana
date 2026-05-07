@@ -34,8 +34,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${playfairDisplay.variable} ${poppins.variable} font-sans antialiased`}>
+    <html lang="en" className="bg-background">
+      <body className={`${playfairDisplay.variable} ${poppins.variable} font-sans antialiased bg-background`}>
         <AuthProvider>
           <LanguageProvider>
             <WishlistProvider>

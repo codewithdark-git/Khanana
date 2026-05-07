@@ -9,8 +9,20 @@ import { useWishlist } from "@/contexts/wishlist-context"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { ProductImageSlider } from "@/components/product-image-slider"
 import { ReviewsSlider } from "@/components/reviews-slider"
-import { ChevronLeft, Heart, ShoppingCart, Truck, Shield, RotateCcw, Star } from "lucide-react"
+import { ChevronLeft, Heart, ShoppingCart, Truck, Shield, RotateCcw, Star, ArrowRight, ImageIcon } from "lucide-react"
 import Link from "next/link"
+
+const CATEGORY_LABELS: Record<string, string> = {
+  shawl: "Shawl",
+  cloth: "Cloth",
+  chappal: "Chappal",
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  shawl: "bg-emerald-600",
+  cloth: "bg-blue-600",
+  chappal: "bg-amber-600",
+}
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -18,6 +30,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
+  const [recommendations, setRecommendations] = useState<Product[]>([])
 
   const inWishlist = product ? isInWishlist(product.id) : false
 
@@ -40,6 +53,35 @@ export default function ProductDetailPage() {
       fetchProduct()
     }
   }, [params.id])
+
+  // Fetch cross-category recommendations for "Complete the Look"
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!product) return
+
+      try {
+        const response = await fetch("/api/products")
+        const data = await response.json()
+        if (data.success) {
+          // Get products from OTHER categories (not the current product's category)
+          const otherCategoryProducts = data.data.filter(
+            (p: Product) => p.category !== product.category && p.id !== product.id
+          )
+          // Pick up to 4 products, prioritizing featured items
+          const sorted = otherCategoryProducts.sort((a: Product, b: Product) => {
+            if (a.featured && !b.featured) return -1
+            if (!a.featured && b.featured) return 1
+            return 0
+          })
+          setRecommendations(sorted.slice(0, 4))
+        }
+      } catch (error) {
+        console.error("Failed to fetch recommendations:", error)
+      }
+    }
+
+    fetchRecommendations()
+  }, [product])
 
   const handleWishlistToggle = () => {
     if (product) {
@@ -226,6 +268,83 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Complete the Look Section */}
+      {recommendations.length > 0 && (
+        <section className="mt-8 sm:mt-12 lg:mt-16 bg-muted/30 py-8 sm:py-12 lg:py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+              <div>
+                <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-secondary/20 text-secondary-foreground rounded-full text-xs sm:text-sm font-medium mb-2 sm:mb-3">
+                  Complete Your Look
+                </span>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold text-foreground">
+                  Pair It With
+                </h2>
+              </div>
+              <Link href="/products">
+                <Button variant="outline" className="bg-transparent text-sm sm:text-base">
+                  View All Products
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+              {recommendations.map((rec) => (
+                <Link key={rec.id} href={`/products/${rec.id}`} className="group">
+                  <div className="bg-card rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 hover:shadow-xl transition-all duration-300">
+                    <div className="relative aspect-[4/5] bg-muted">
+                      {rec.images && rec.images.length > 0 ? (
+                        <img
+                          src={rec.images[0]}
+                          alt={rec.imageAlt || rec.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/40">
+                          <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 mb-1 sm:mb-2" />
+                          <span className="text-xs sm:text-sm">No Image</span>
+                        </div>
+                      )}
+
+                      {/* Category badge */}
+                      <Badge
+                        className={`absolute top-2 left-2 sm:top-3 sm:left-3 text-white text-[10px] sm:text-xs font-medium ${CATEGORY_COLORS[rec.category] || "bg-primary"}`}
+                      >
+                        {CATEGORY_LABELS[rec.category] || rec.category}
+                      </Badge>
+
+                      {/* Discount badge */}
+                      {rec.discountPercentage > 0 && (
+                        <Badge className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-primary text-primary-foreground text-[10px] sm:text-xs font-medium">
+                          -{rec.discountPercentage}%
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="p-3 sm:p-4">
+                      <h3 className="font-serif font-semibold text-foreground text-sm sm:text-base line-clamp-1 group-hover:text-primary transition-colors mb-1 sm:mb-2">
+                        {rec.name}
+                      </h3>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-base sm:text-lg font-bold text-primary">
+                          Rs {rec.discountedPrice.toLocaleString()}
+                        </span>
+                        {rec.originalPrice !== rec.discountedPrice && (
+                          <span className="text-xs text-muted-foreground line-through">
+                            Rs {rec.originalPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Customer Reviews Section */}
       <div className="mt-8 sm:mt-12 lg:mt-16">
