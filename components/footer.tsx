@@ -18,11 +18,11 @@ export function Footer() {
               </div>
               <div className="flex flex-col">
                 <span className="text-xl font-serif font-bold text-foreground leading-none">Khanana</span>
-                <span className="text-[10px] text-muted-foreground tracking-wider">AUTHENTIC SHAWLS</span>
+                <span className="text-[10px] text-muted-foreground tracking-wider">HERITAGE CRAFTS</span>
               </div>
             </div>
             <p className="text-muted-foreground text-sm">
-              Preserving authentic Pashtun heritage through handwoven Pathan shawls.
+              Khanana preserves the rich heritage of Khyber Pakhtunkhwa through handcrafted shawls, traditional cloth, and artisanal chappal.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export function Footer() {
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
               Available 24/7
             </div>
-            <p className="text-muted-foreground text-sm">We're always here to help you find the perfect shawl.</p>
+            <p className="text-muted-foreground text-sm">We're always here to help you find the perfect piece.</p>
           </div>
         </div>
 

@@ -32,9 +32,10 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
             originalPrice: 0,
             discountedPrice: 0,
             discountPercentage: 0,
-            image: "",
+            images: [],
             imageAlt: "",
             style: "",
+            category: "shawl",
             featured: false,
         },
     )
@@ -117,8 +118,22 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
                                 <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="style">Style / Category</Label>
+                                <Label htmlFor="style">Style</Label>
                                 <Input id="style" name="style" value={formData.style} onChange={handleChange} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Category</Label>
+                                <select
+                                    id="category"
+                                    name="category"
+                                    value={formData.category || "shawl"}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value as "shawl" | "cloth" | "chappal" }))}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                >
+                                    <option value="shawl">Shawl</option>
+                                    <option value="cloth">Cloth (Unstitched)</option>
+                                    <option value="chappal">Chappal (Footwear)</option>
+                                </select>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Description (English)</Label>
@@ -181,13 +196,13 @@ export function ProductForm({ initialData, isEditing = false }: ProductFormProps
                     <Card>
                         <CardContent className="pt-6 space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="image">Image URL</Label>
+                                <Label htmlFor="images">Image URLs (comma separated)</Label>
                                 <Input
-                                    id="image"
-                                    name="image"
-                                    value={formData.image}
-                                    onChange={handleChange}
-                                    placeholder="/images/product.jpg"
+                                    id="images"
+                                    name="images"
+                                    value={formData.images?.join(", ") || ""}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, images: e.target.value.split(",").map(s => s.trim()) }))}
+                                    placeholder="https://example.com/product1.jpg, https://example.com/product2.jpg"
                                     required
                                 />
                             </div>

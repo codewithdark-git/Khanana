@@ -5,15 +5,17 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const featured = searchParams.get("featured")
+    const category = searchParams.get("category")
 
-    let products;
+    const where: Record<string, unknown> = {}
     if (featured === "true") {
-      products = await prisma.product.findMany({
-        where: { featured: true }
-      })
-    } else {
-      products = await prisma.product.findMany()
+      where.featured = true
     }
+    if (category) {
+      where.category = category
+    }
+
+    const products = await prisma.product.findMany({ where })
 
     return NextResponse.json({
       success: true,
@@ -44,9 +46,10 @@ export async function POST(request: NextRequest) {
         originalPrice: Number(data.originalPrice),
         discountedPrice: Number(data.discountedPrice),
         discountPercentage: Number(data.discountPercentage),
-        image: data.image,
+        images: data.images || [],
         imageAlt: data.imageAlt,
         style: data.style,
+        category: data.category || "shawl",
         tiktokUrl: data.tiktokUrl,
         featured: data.featured || false,
       }

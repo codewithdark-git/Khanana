@@ -31,10 +31,10 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 h-full flex flex-col border-border/50 bg-card">
       <div className="relative overflow-hidden bg-muted aspect-[4/5]">
-        {product.image ? (
+        {product.images && product.images.length > 0 ? (
           <img
-            src={product.image || "/placeholder.svg"}
-            alt={product.imageAlt}
+            src={product.images[0]}
+            alt={product.imageAlt || product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
@@ -51,12 +51,26 @@ export function ProductCard({ product }: ProductCardProps) {
           </Badge>
         )}
 
+        {/* Category Badge */}
+        {product.category && (
+          <Badge
+            className={`absolute left-2 sm:left-3 text-white font-medium text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 ${product.discountPercentage > 0 ? "top-8 sm:top-10" : "top-2 sm:top-3"
+              } ${product.category === "shawl"
+                ? "bg-emerald-600"
+                : product.category === "cloth"
+                  ? "bg-blue-600"
+                  : "bg-amber-600"
+              }`}
+          >
+            {product.category === "shawl" ? "Shawl" : product.category === "cloth" ? "Cloth" : "Chappal"}
+          </Badge>
+        )}
+
         {/* Wishlist Button - Responsive size */}
         <button
           onClick={handleWishlistToggle}
-          className={`absolute top-2 right-2 sm:top-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-            inWishlist ? "bg-red-500 text-white" : "bg-white/90 text-foreground hover:bg-white"
-          }`}
+          className={`absolute top-2 right-2 sm:top-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${inWishlist ? "bg-red-500 text-white" : "bg-white/90 text-foreground hover:bg-white"
+            }`}
           aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
         >
           <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${inWishlist ? "fill-current" : ""}`} />
