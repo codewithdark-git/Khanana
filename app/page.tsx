@@ -2,7 +2,20 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles, Award, Truck, HeartHandshake, Leaf, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  ArrowRight,
+  Sparkles,
+  Award,
+  Truck,
+  HeartHandshake,
+  Leaf,
+  ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Layers,
+  Scissors,
+  Footprints,
+} from "lucide-react"
 import { ReviewsSlider } from "@/components/reviews-slider"
 import { AboutImage } from "@/components/about-image"
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -48,8 +61,8 @@ const categories = [
     headline: "Woven by Hand, Worn with Pride",
     sub: "Authentic Pathan shawls from master weavers of KPK",
     href: "/products?category=shawl",
-    gradient: "from-primary/80 to-primary/40",
-    emoji: "🧣",
+    gradient: "from-primary/85 via-primary/40 to-primary/10",
+    Icon: Layers,
   },
   {
     key: "cloth",
@@ -57,8 +70,8 @@ const categories = [
     headline: "The Fabric of Tradition",
     sub: "Premium khaddar & suiting cloth, unstitched & ready to craft",
     href: "/products?category=cloth",
-    gradient: "from-blue-800/80 to-blue-600/40",
-    emoji: "🪡",
+    gradient: "from-blue-900/85 via-blue-800/40 to-blue-700/10",
+    Icon: Scissors,
   },
   {
     key: "chappal",
@@ -66,8 +79,8 @@ const categories = [
     headline: "Crafted for Every Step",
     sub: "Handmade Peshawari chappal, timeless and comfortable",
     href: "/products?category=chappal",
-    gradient: "from-amber-700/80 to-amber-600/40",
-    emoji: "👞",
+    gradient: "from-amber-800/85 via-amber-700/40 to-amber-600/10",
+    Icon: Footprints,
   },
 ]
 
@@ -76,6 +89,8 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const touchStartX = useRef<number | null>(null)
+  const touchDeltaX = useRef<number>(0)
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
@@ -87,12 +102,42 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isPaused) {
-      intervalRef.current = setInterval(nextSlide, 5000)
+      intervalRef.current = setInterval(nextSlide, 6000)
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [isPaused, nextSlide])
+
+  // Keyboard arrow navigation for hero
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prevSlide()
+      if (e.key === "ArrowRight") nextSlide()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [nextSlide, prevSlide])
+
+  // Touch / swipe handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    touchDeltaX.current = 0
+    setIsPaused(true)
+  }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current
+  }
+  const handleTouchEnd = () => {
+    const threshold = 50
+    if (touchDeltaX.current > threshold) prevSlide()
+    else if (touchDeltaX.current < -threshold) nextSlide()
+    touchStartX.current = null
+    touchDeltaX.current = 0
+    // resume autoplay after a brief pause
+    setTimeout(() => setIsPaused(false), 200)
+  }
 
   // ─── Hero Images ─────────────────────────────────────
   const [heroImages, setHeroImages] = useState<string[]>([])
@@ -115,6 +160,7 @@ export default function HomePage() {
   // ─── Featured Products ───────────────────────────────
   const [allProducts, setAllProducts] = useState<Product[]>([])
   const [activeTab, setActiveTab] = useState<"best" | "new">("best")
+  const [productsLoading, setProductsLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -126,13 +172,17 @@ export default function HomePage() {
         }
       } catch (error) {
         console.error("Failed to fetch products", error)
+      } finally {
+        setProductsLoading(false)
       }
     }
     fetchProducts()
   }, [])
 
   const bestSellers = allProducts.filter((p) => p.featured).slice(0, 4)
-  const newArrivals = [...allProducts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 4)
+  const newArrivals = [...allProducts]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 4)
   const displayProducts = activeTab === "best" ? bestSellers : newArrivals
 
   const slide = heroSlides[currentSlide]
@@ -141,64 +191,102 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* ═══════════ HERO CAROUSEL ═══════════ */}
       <section
-        className="relative min-h-[100svh] flex items-center overflow-hidden"
+        className="relative min-h-[100svh] flex items-center overflow-hidden select-none"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
+        onFocus={() => setIsPaused(true)}
+        onBlur={() => setIsPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        aria-roledescription="carousel"
+        aria-label="Khanana hero collection"
       >
-        {/* Background — placeholder or admin image */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 hidden md:block">
-           {/* Fallback pattern when transparent */}
-        </div>
-        <div className="absolute inset-0 transition-opacity duration-1000">
-          {heroImages.length > 0 && (
-            <img 
-              src={heroImages[currentSlide % heroImages.length]} 
-              key={currentSlide % heroImages.length}
-              alt="Khanana Heritage Collection" 
-              className="w-full h-full object-cover animate-in fade-in duration-1000" 
-            />
-          )}
-        </div>
+        {/* Fallback brand background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" aria-hidden="true" />
 
-        {/* Gradient overlay per slide */}
-        <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
+        {/* Crossfading hero image stack */}
+        {heroImages.length > 0 && (
+          <div className="absolute inset-0">
+            {heroSlides.map((_, idx) => {
+              const src = heroImages[idx % heroImages.length]
+              const isActive = idx === currentSlide
+              return (
+                <img
+                  key={idx}
+                  src={src}
+                  alt={`Khanana ${heroSlides[idx].badge.toLowerCase()}`}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={idx === 0 ? "high" : "low"}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-out ${
+                    isActive ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              )
+            })}
+          </div>
+        )}
+
+        {/* Gradient overlay per slide (also crossfades) */}
+        {heroSlides.map((s, idx) => (
+          <div
+            key={s.key}
+            aria-hidden="true"
+            className={`absolute inset-0 bg-gradient-to-r ${s.gradient} transition-opacity duration-[1200ms] ease-out ${
+              idx === currentSlide ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
 
         {/* Decorative circles */}
-        <div className="absolute inset-0 opacity-[0.03] hidden sm:block pointer-events-none">
-          <div className="absolute top-10 left-10 w-32 h-32 lg:w-64 lg:h-64 border border-white rounded-full" />
-          <div className="absolute bottom-10 right-10 w-48 h-48 lg:w-96 lg:h-96 border border-white rounded-full" />
+        <div className="absolute inset-0 opacity-[0.04] hidden sm:block pointer-events-none" aria-hidden="true">
+          <div className="absolute top-10 left-10 w-32 h-32 lg:w-64 lg:h-64 border border-white rounded-full animate-gentle-float" />
+          <div
+            className="absolute bottom-10 right-10 w-48 h-48 lg:w-96 lg:h-96 border border-white rounded-full animate-gentle-float"
+            style={{ animationDelay: "1.2s" }}
+          />
         </div>
 
-        {/* Slide Content */}
+        {/* Slide Content (animates per active slide) */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40 w-full">
-          <div className="max-w-xl">
-            <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4 border border-white/10">
+          <div className="max-w-xl" key={`slide-${currentSlide}`}>
+            <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4 border border-white/10 animate-slide-down">
               {slide.badge}
             </span>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-3 sm:mb-4 leading-tight whitespace-pre-line drop-shadow-lg">
+            <h1
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-3 sm:mb-4 leading-tight whitespace-pre-line drop-shadow-lg animate-slide-down text-balance"
+              style={{ animationDelay: "60ms" }}
+            >
               {slide.headline}
             </h1>
 
-            <p className="text-sm sm:text-base lg:text-lg text-white/85 mb-6 sm:mb-8 max-w-lg leading-relaxed drop-shadow-md">
+            <p
+              className="text-sm sm:text-base lg:text-lg text-white/90 mb-6 sm:mb-8 max-w-lg leading-relaxed drop-shadow-md animate-slide-down text-pretty"
+              style={{ animationDelay: "140ms" }}
+            >
               {slide.sub}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div
+              className="flex flex-col sm:flex-row gap-2 sm:gap-3 animate-slide-down"
+              style={{ animationDelay: "220ms" }}
+            >
               <Link href={slide.href}>
                 <Button
                   size="lg"
-                  className="bg-white text-primary hover:bg-white/90 px-5 sm:px-8 h-11 sm:h-13 text-sm sm:text-base font-semibold shadow-xl w-full sm:w-auto"
+                  className="bg-white text-primary hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] px-5 sm:px-8 h-11 sm:h-13 text-sm sm:text-base font-semibold shadow-xl w-full sm:w-auto transition-all duration-300"
                 >
                   {slide.cta}
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
               <Link href="/products">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-white/50 text-white hover:bg-white/10 px-5 sm:px-8 h-11 sm:h-13 text-sm sm:text-base font-semibold bg-transparent w-full sm:w-auto"
+                  className="border-2 border-white/60 text-white hover:bg-white/15 hover:border-white px-5 sm:px-8 h-11 sm:h-13 text-sm sm:text-base font-semibold bg-transparent backdrop-blur-sm w-full sm:w-auto transition-all duration-300"
                 >
                   View All Products
                 </Button>
@@ -210,30 +298,33 @@ export default function HomePage() {
         {/* Navigation Arrows */}
         <button
           onClick={prevSlide}
-          className="absolute left-2 sm:left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/15 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 border border-white/10"
+          className="absolute left-2 sm:left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/15 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all duration-300 border border-white/20 hover:scale-110 active:scale-95"
           aria-label="Previous slide"
         >
           <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-2 sm:right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/15 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 border border-white/10"
+          className="absolute right-2 sm:right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/15 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all duration-300 border border-white/20 hover:scale-110 active:scale-95"
           aria-label="Next slide"
         >
           <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
         {/* Dot Indicators */}
-        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-3">
-          {heroSlides.map((_, idx) => (
+        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-3" role="tablist">
+          {heroSlides.map((s, idx) => (
             <button
-              key={idx}
+              key={s.key}
               onClick={() => setCurrentSlide(idx)}
-              className={`transition-all duration-300 rounded-full ${idx === currentSlide
-                ? "w-8 sm:w-10 h-2.5 sm:h-3 bg-white"
-                : "w-2.5 sm:w-3 h-2.5 sm:h-3 bg-white/40 hover:bg-white/60"
-                }`}
-              aria-label={`Go to slide ${idx + 1}`}
+              role="tab"
+              aria-selected={idx === currentSlide}
+              className={`transition-all duration-500 rounded-full ${
+                idx === currentSlide
+                  ? "w-8 sm:w-10 h-2.5 sm:h-3 bg-white shadow-lg"
+                  : "w-2.5 sm:w-3 h-2.5 sm:h-3 bg-white/40 hover:bg-white/70"
+              }`}
+              aria-label={`Go to slide ${idx + 1}: ${s.badge}`}
             />
           ))}
         </div>
@@ -255,28 +346,44 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 lg:gap-8">
-            {categories.map((cat) => (
-              <Link key={cat.key} href={cat.href} className="group">
-                <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-muted aspect-[4/5] flex flex-col items-end justify-end border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
-                  <div className={`absolute inset-0 bg-gradient-to-t ${cat.gradient} opacity-80 group-hover:opacity-90 transition-opacity duration-500`} />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-20 group-hover:opacity-30 transition-opacity">
-                    <span className="text-[120px] sm:text-[100px] lg:text-[140px]">{cat.emoji}</span>
-                  </div>
-                  <div className="relative z-10 p-4 sm:p-5 lg:p-6 w-full">
-                    <h3 className="font-serif font-bold text-white text-lg sm:text-xl lg:text-2xl mb-1 sm:mb-2 drop-shadow-lg">
-                      {cat.headline}
-                    </h3>
-                    <p className="text-white/80 text-xs sm:text-sm lg:text-base mb-3 sm:mb-4 drop-shadow-md leading-relaxed">
-                      {cat.sub}
-                    </p>
-                    <div className="flex items-center text-white font-medium text-sm group-hover:gap-3 gap-2 transition-all duration-300">
-                      Shop {cat.name.split(" ")[0]}
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+            {categories.map((cat) => {
+              const Icon = cat.Icon
+              return (
+                <Link key={cat.key} href={cat.href} className="group">
+                  <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-muted aspect-[4/5] flex flex-col items-end justify-end border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
+                    {/* Base gradient */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-t ${cat.gradient} opacity-90 group-hover:opacity-95 transition-opacity duration-500`}
+                      aria-hidden="true"
+                    />
+
+                    {/* Subtle decorative pattern */}
+                    <div className="absolute inset-0 opacity-[0.06] pointer-events-none" aria-hidden="true">
+                      <div className="absolute -top-12 -right-12 w-40 h-40 sm:w-56 sm:h-56 rounded-full border-2 border-white" />
+                      <div className="absolute -bottom-16 -left-16 w-48 h-48 sm:w-64 sm:h-64 rounded-full border-2 border-white" />
+                    </div>
+
+                    {/* Centered category icon */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-15 group-hover:opacity-25 group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                      <Icon className="w-24 h-24 sm:w-28 sm:h-28 lg:w-36 lg:h-36 text-white" strokeWidth={1.25} />
+                    </div>
+
+                    <div className="relative z-10 p-4 sm:p-5 lg:p-6 w-full">
+                      <h3 className="font-serif font-bold text-white text-lg sm:text-xl lg:text-2xl mb-1 sm:mb-2 drop-shadow-lg text-balance">
+                        {cat.headline}
+                      </h3>
+                      <p className="text-white/85 text-xs sm:text-sm lg:text-base mb-3 sm:mb-4 drop-shadow-md leading-relaxed text-pretty">
+                        {cat.sub}
+                      </p>
+                      <div className="inline-flex items-center text-white font-medium text-sm gap-2 group-hover:gap-3 transition-all duration-300">
+                        Shop {cat.name.split(" ")[0]}
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -341,40 +448,68 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8 lg:mb-12">
-            {displayProducts.map((product) => (
-              <Link key={product.id} href={`/products/${product.id}`} className="group">
-                <div className="bg-muted rounded-lg sm:rounded-xl lg:rounded-2xl aspect-[3/4] flex flex-col items-center justify-center border border-border/50 overflow-hidden relative">
-                  {product.images && product.images.length > 0 ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.imageAlt || product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/40">
-                      <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-16 lg:h-16 mb-1 sm:mb-2 lg:mb-3" />
-                      <p className="text-xs sm:text-sm text-center px-2">{product.name}</p>
+            {productsLoading
+              ? [...Array(4)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg sm:rounded-xl lg:rounded-2xl aspect-[3/4] skeleton-shimmer"
+                  />
+                ))
+              : displayProducts.map((product) => (
+                  <Link key={product.id} href={`/products/${product.id}`} className="group">
+                    <div className="bg-muted rounded-lg sm:rounded-xl lg:rounded-2xl aspect-[3/4] flex flex-col items-center justify-center border border-border/50 overflow-hidden relative shadow-sm hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-500">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.imageAlt || product.name}
+                          loading="lazy"
+                          decoding="async"
+                          onLoad={(e) => e.currentTarget.classList.add("image-fade-in")}
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/40">
+                          <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-16 lg:h-16 mb-1 sm:mb-2 lg:mb-3" />
+                          <p className="text-xs sm:text-sm text-center px-2">{product.name}</p>
+                        </div>
+                      )}
+
+                      {/* Bottom gradient overlay (always visible on mobile, intensifies on hover) */}
+                      <div
+                        className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300 pointer-events-none"
+                        aria-hidden="true"
+                      />
+
+                      {/* Category badge */}
+                      <span
+                        className={`absolute top-2 left-2 sm:top-3 sm:left-3 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full backdrop-blur-sm shadow-md ${
+                          product.category === "shawl"
+                            ? "bg-emerald-600/95"
+                            : product.category === "cloth"
+                              ? "bg-blue-600/95"
+                              : "bg-amber-600/95"
+                        }`}
+                      >
+                        {product.category === "shawl"
+                          ? "Shawl"
+                          : product.category === "cloth"
+                            ? "Cloth"
+                            : "Chappal"}
+                      </span>
+
+                      {/* Always-visible product info at bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 transform group-hover:-translate-y-0.5 transition-transform duration-300">
+                        <p className="text-white font-serif font-semibold text-sm sm:text-base lg:text-lg truncate drop-shadow-md">
+                          {product.name}
+                        </p>
+                        <p className="text-white/90 text-xs sm:text-sm font-medium">
+                          Rs {product.discountedPrice.toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                  {/* Category badge */}
-                  <span className={`absolute top-2 left-2 sm:top-3 sm:left-3 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full ${product.category === "shawl" ? "bg-emerald-600" : product.category === "cloth" ? "bg-blue-600" : "bg-amber-600"
-                    }`}>
-                    {product.category === "shawl" ? "Shawl" : product.category === "cloth" ? "Cloth" : "Chappal"}
-                  </span>
-
-                  {/* Price overlay on hover */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="text-white font-serif font-bold text-sm sm:text-base lg:text-lg truncate">{product.name}</p>
-                    <p className="text-white/80 text-xs sm:text-sm">Rs {product.discountedPrice.toLocaleString()}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-            {displayProducts.length === 0 && (
+                  </Link>
+                ))}
+            {!productsLoading && displayProducts.length === 0 && (
               <div className="col-span-full text-center text-muted-foreground py-12">
                 No products found.
               </div>
@@ -402,7 +537,7 @@ export default function HomePage() {
       <section className="py-8 sm:py-12 lg:py-20 bg-primary/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-            <div className="bg-muted rounded-xl sm:rounded-2xl lg:rounded-3xl w-full aspect-square flex flex-col items-center justify-center border-2 border-dashed border-border overflow-hidden relative">
+            <div className="bg-muted rounded-xl sm:rounded-2xl lg:rounded-3xl w-full aspect-square flex flex-col items-center justify-center border border-border/50 overflow-hidden relative shadow-lg">
               <AboutImage />
             </div>
             <div className="text-center lg:text-left">

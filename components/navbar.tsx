@@ -42,16 +42,45 @@ export function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false)
+    setMobileShopExpanded(false)
+  }, [pathname])
+
+  // Lock body scroll while mobile menu is open
+  useEffect(() => {
+    const html = document.documentElement
+    if (mobileMenuOpen) {
+      html.classList.add("scroll-locked")
+    } else {
+      html.classList.remove("scroll-locked")
+    }
+    return () => html.classList.remove("scroll-locked")
+  }, [mobileMenuOpen])
+
+  // Close menu on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false)
+        setShopDropdownOpen(false)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
   const isShopActive = pathname === "/products" || pathname.startsWith("/products?")
 
   return (
-    <nav className="bg-background border-b border-border sticky top-0 z-50">
+    <nav className="bg-background/85 backdrop-blur-md border-b border-border sticky top-0 z-50 supports-[backdrop-filter]:bg-background/75">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 lg:h-20">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 group">
+            <Link href="/" className="flex items-center space-x-2 group" aria-label="Khanana home">
               <div className="relative">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-primary/25 transition-all duration-300">
+                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-primary/25 group-hover:scale-105 transition-all duration-300">
                   <span className="text-primary-foreground font-serif font-bold text-lg lg:text-xl">K</span>
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-secondary rounded-full border-2 border-background" />
@@ -95,15 +124,13 @@ export function Navbar() {
 
                     {/* Dropdown Menu */}
                     {shopDropdownOpen && (
-                      <div
-                        className="absolute top-full left-0 mt-1 w-56 bg-card rounded-xl shadow-xl border border-border/50 py-2 z-50 overflow-hidden"
-                      >
+                      <div className="absolute top-full left-0 mt-1 w-56 bg-card rounded-xl shadow-xl border border-border/50 py-2 z-50 overflow-hidden animate-slide-down">
                         {shopCategories.map((cat) => (
                           <Link
                             key={cat.href}
                             href={cat.href}
                             onClick={() => setShopDropdownOpen(false)}
-                            className="block px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            className="block px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted hover:pl-5 transition-all duration-200"
                           >
                             {cat.name}
                           </Link>
@@ -147,16 +174,32 @@ export function Navbar() {
             <button
               className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <div className="relative w-6 h-6">
+                <Menu
+                  className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${
+                    mobileMenuOpen ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"
+                  }`}
+                />
+                <X
+                  className={`absolute inset-0 w-6 h-6 transition-all duration-300 ${
+                    mobileMenuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"
+                  }`}
+                />
+              </div>
             </button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-border">
+          <div
+            className="lg:hidden py-4 border-t border-border animate-slide-down max-h-[calc(100svh-4rem)] overflow-y-auto"
+            id="mobile-menu"
+          >
             <div className="flex flex-col space-y-1">
               {navigation.map((item) => (
                 item.hasDropdown ? (

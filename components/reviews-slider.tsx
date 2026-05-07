@@ -8,13 +8,15 @@ export function ReviewsSlider() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [isPaused, setIsPaused] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    if (isPaused) return
+    // Guard: don't run interval on empty arrays (avoids modulo-by-zero NaN)
+    if (isPaused || reviews.length <= 1) return
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % reviews.length)
-    }, 4000)
+    }, 5000)
 
     return () => clearInterval(interval)
   }, [isPaused, reviews.length])
@@ -22,25 +24,32 @@ export function ReviewsSlider() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await fetch('/api/reviews')
+        const res = await fetch("/api/reviews")
         const data = await res.json()
         if (data.success) {
           setReviews(data.data)
         }
       } catch (error) {
         console.error("Failed to fetch reviews", error)
+      } finally {
+        setLoaded(true)
       }
     }
     fetchReviews()
   }, [])
 
   const goToPrev = () => {
+    if (reviews.length === 0) return
     setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length)
   }
 
   const goToNext = () => {
+    if (reviews.length === 0) return
     setCurrentIndex((prev) => (prev + 1) % reviews.length)
   }
+
+  // Hide entire section if loaded with zero reviews — keeps the page clean
+  if (loaded && reviews.length === 0) return null
 
   return (
     <section className="py-8 sm:py-12 lg:py-20 bg-primary/5 overflow-hidden">
@@ -57,50 +66,83 @@ export function ReviewsSlider() {
           </p>
         </div>
 
-        <div className="relative" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
-          {/* Navigation Buttons - Responsive sizing */}
-          <button
-            onClick={goToPrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/20 transition-colors -ml-1 sm:-ml-2 lg:ml-0"
-            aria-label="Previous review"
+        {!loaded ? (
+          <div className="max-w-3xl mx-auto px-6 sm:px-8 lg:px-16">
+            <div className="rounded-xl sm:rounded-2xl skeleton-shimmer h-48 sm:h-56 lg:h-64" />
+          </div>
+        ) : (
+          <div
+            className="relative"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={(e) => {
+              ;(e.currentTarget as any)._tx = e.touches[0].clientX
+              setIsPaused(true)
+            }}
+            onTouchEnd={(e) => {
+              const start = (e.currentTarget as any)._tx as number | undefined
+              const end = e.changedTouches[0].clientX
+              if (start !== undefined) {
+                const delta = end - start
+                if (delta > 50) goToPrev()
+                else if (delta < -50) goToNext()
+              }
+              setTimeout(() => setIsPaused(false), 200)
+            }}
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-foreground" />
-          </button>
+            {/* Navigation Buttons */}
+            {reviews.length > 1 && (
+              <>
+                <button
+                  onClick={goToPrev}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/20 hover:scale-110 active:scale-95 transition-all duration-300 -ml-1 sm:-ml-2 lg:ml-0"
+                  aria-label="Previous review"
+                >
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-foreground" />
+                </button>
 
-          <button
-            onClick={goToNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/20 transition-colors -mr-1 sm:-mr-2 lg:mr-0"
-            aria-label="Next review"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-foreground" />
-          </button>
+                <button
+                  onClick={goToNext}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-card rounded-full shadow-lg flex items-center justify-center hover:bg-secondary/20 hover:scale-110 active:scale-95 transition-all duration-300 -mr-1 sm:-mr-2 lg:mr-0"
+                  aria-label="Next review"
+                >
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-foreground" />
+                </button>
+              </>
+            )}
 
-          {/* Slider Container - Responsive padding */}
-          <div className="overflow-hidden px-6 sm:px-8 lg:px-16">
-            <div
-              className="flex transition-transform duration-500 ease-out"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            >
-              {reviews.map((review, index) => (
-                <div key={`${review.id}-${index}`} className="w-full flex-shrink-0 px-2 sm:px-4">
-                  <ReviewCard review={review} />
-                </div>
-              ))}
+            {/* Slider Container */}
+            <div className="overflow-hidden px-6 sm:px-8 lg:px-16">
+              <div
+                className="flex transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+              >
+                {reviews.map((review, index) => (
+                  <div key={`${review.id}-${index}`} className="w-full flex-shrink-0 px-2 sm:px-4">
+                    <ReviewCard review={review} />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6 lg:mt-8">
-            {reviews.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 ${index === currentIndex ? "bg-primary w-6 sm:w-8" : "bg-primary/30 hover:bg-primary/50 w-2 sm:w-2.5"
-                  }`}
-                aria-label={`Go to review ${index + 1}`}
-              />
-            ))}
+            {reviews.length > 1 && (
+              <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6 lg:mt-8">
+                {reviews.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`h-2 sm:h-2.5 rounded-full transition-all duration-500 ${
+                      index === currentIndex
+                        ? "bg-primary w-6 sm:w-8"
+                        : "bg-primary/30 hover:bg-primary/50 w-2 sm:w-2.5"
+                    }`}
+                    aria-label={`Go to review ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </section>
   )
