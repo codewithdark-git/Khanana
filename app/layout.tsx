@@ -22,9 +22,9 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "Khanana - Authentic Pathan Shawls",
+  title: "Khanana | Authentic Pashtun Shawls, Cloth & Chappal | Handcrafted in Khyber Pakhtunkhwa",
   description:
-    "Discover authentic handwoven Pathan shawls from Khanana. Premium quality Pashtun craftsmanship with traditional heritage.",
+    "Khanana preserves the rich heritage of Khyber Pakhtunkhwa through handcrafted shawls, traditional cloth, and artisanal chappal. Shop authentic Pashtun craftsmanship.",
   generator: "v0.app",
 }
 

@@ -123,10 +123,10 @@ export default function AdminProductsPage() {
                   <div key={product.id} className="p-3 border border-border rounded-lg bg-card">
                     <div className="flex items-start gap-3">
                       <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {product.image ? (
+                        {product.images && product.images.length > 0 ? (
                           <img
-                            src={product.image || "/placeholder.svg"}
-                            alt={product.imageAlt}
+                            src={product.images[0]}
+                            alt={product.imageAlt || product.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -180,10 +180,10 @@ export default function AdminProductsPage() {
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                              {product.image ? (
+                              {product.images && product.images.length > 0 ? (
                                 <img
-                                  src={product.image || "/placeholder.svg"}
-                                  alt={product.imageAlt}
+                                  src={product.images[0]}
+                                  alt={product.imageAlt || product.name}
                                   className="w-full h-full object-cover"
                                 />
                               ) : (

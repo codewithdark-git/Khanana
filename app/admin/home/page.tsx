@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Save, Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -11,7 +12,7 @@ import { toast } from "sonner"
 export default function AdminHomePage() {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
-        heroImage: "",
+        heroImages: "",
     })
 
     useEffect(() => {
@@ -20,8 +21,8 @@ export default function AdminHomePage() {
             try {
                 const res = await fetch("/api/settings")
                 const data = await res.json()
-                if (data.success && data.data.heroImage) {
-                    setFormData({ heroImage: data.data.heroImage })
+                if (data.success && data.data.heroImages) {
+                    setFormData({ heroImages: data.data.heroImages.join(", ") })
                 }
             } catch (error) {
                 console.error("Failed to fetch settings:", error)
@@ -39,10 +40,12 @@ export default function AdminHomePage() {
         setLoading(true)
 
         try {
+            const parsedImages = formData.heroImages.split(',').map(s => s.trim()).filter(Boolean);
+
             const res = await fetch("/api/settings", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ heroImage: formData.heroImage })
+                body: JSON.stringify({ heroImages: parsedImages })
             })
             const data = await res.json()
             if (data.success) {
@@ -71,34 +74,37 @@ export default function AdminHomePage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="heroImage">Hero Image URL</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="heroImage"
-                                    name="heroImage"
-                                    value={formData.heroImage}
-                                    onChange={handleChange}
-                                    placeholder="/images/hero.jpg"
-                                />
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Enter the URL of the image to display in the main hero section.
+                            <Label htmlFor="heroImages">Hero Image URLs (comma separated)</Label>
+                            <Textarea
+                                id="heroImages"
+                                name="heroImages"
+                                value={formData.heroImages}
+                                onChange={(e) => setFormData({ ...formData, heroImages: e.target.value })}
+                                placeholder="https://example.com/hero1.jpg, https://example.com/hero2.jpg"
+                                rows={4}
+                            />
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Enter the URLs of the images to display in the main hero section, separated by commas. These will map to the 3 carousel slides natively.
                             </p>
                         </div>
 
                         {/* Preview */}
-                        {formData.heroImage && (
+                        {formData.heroImages && (
                             <div className="mt-4 p-4 border border-border rounded-lg bg-muted/30">
                                 <Label className="mb-2 block">Preview</Label>
-                                <div className="relative aspect-[16/9] w-full max-w-md overflow-hidden rounded-md border border-border bg-muted">
-                                    <img
-                                        src={formData.heroImage}
-                                        alt="Hero Preview"
-                                        className="object-cover w-full h-full"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = "/placeholder.svg"
-                                        }}
-                                    />
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {formData.heroImages.split(',').map(s => s.trim()).filter(Boolean).map((img, idx) => (
+                                        <div key={idx} className="relative aspect-[16/9] w-full overflow-hidden rounded-md border border-border bg-muted">
+                                            <img
+                                                src={img}
+                                                alt={`Hero Preview ${idx + 1}`}
+                                                className="object-cover w-full h-full"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = "/placeholder.svg"
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}

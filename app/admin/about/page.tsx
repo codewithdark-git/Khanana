@@ -79,8 +79,8 @@ export default function AdminAboutPage() {
                                 onChange={handleChange}
                                 placeholder="/images/about.jpg"
                             />
-                            <p className="text-xs text-muted-foreground">
-                                This image will appear alongside the "Our Story" text.
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Enter the URL of the image to appear alongside the "Our Story" text.
                             </p>
                         </div>
 

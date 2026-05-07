@@ -2,24 +2,108 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles, Award, Truck, HeartHandshake, ImageIcon } from "lucide-react"
+import { ArrowRight, Sparkles, Award, Truck, HeartHandshake, Leaf, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { ReviewsSlider } from "@/components/reviews-slider"
 import { AboutImage } from "@/components/about-image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 import { type Product } from "@prisma/client"
 
+// ─── Hero Carousel Slides ─────────────────────────────
+const heroSlides = [
+  {
+    key: "shawls",
+    badge: "Shawl Collection",
+    headline: "Woven by Hand,\nWorn with Pride",
+    sub: "Authentic Pathan shawls from the master weavers of Khyber Pakhtunkhwa.",
+    cta: "Shop Shawls",
+    href: "/products?category=shawl",
+    gradient: "from-primary/90 via-primary/50 to-transparent",
+  },
+  {
+    key: "cloth",
+    badge: "Cloth Collection",
+    headline: "The Fabric\nof Tradition",
+    sub: "Premium khaddar & suiting fabric — unstitched, ready to craft your signature look.",
+    cta: "Shop Cloth",
+    href: "/products?category=cloth",
+    gradient: "from-blue-900/90 via-blue-800/50 to-transparent",
+  },
+  {
+    key: "chappal",
+    badge: "Chappal Collection",
+    headline: "Crafted for\nEvery Step",
+    sub: "Handmade Peshawari chappal — timeless comfort meets artisanal craftsmanship.",
+    cta: "Shop Chappal",
+    href: "/products?category=chappal",
+    gradient: "from-amber-900/90 via-amber-800/50 to-transparent",
+  },
+]
+
+// ─── Category Cards ────────────────────────────────────
+const categories = [
+  {
+    key: "shawl",
+    name: "Shawls",
+    headline: "Woven by Hand, Worn with Pride",
+    sub: "Authentic Pathan shawls from master weavers of KPK",
+    href: "/products?category=shawl",
+    gradient: "from-primary/80 to-primary/40",
+    emoji: "🧣",
+  },
+  {
+    key: "cloth",
+    name: "Cloth (Unstitched)",
+    headline: "The Fabric of Tradition",
+    sub: "Premium khaddar & suiting cloth, unstitched & ready to craft",
+    href: "/products?category=cloth",
+    gradient: "from-blue-800/80 to-blue-600/40",
+    emoji: "🪡",
+  },
+  {
+    key: "chappal",
+    name: "Chappal (Footwear)",
+    headline: "Crafted for Every Step",
+    sub: "Handmade Peshawari chappal, timeless and comfortable",
+    href: "/products?category=chappal",
+    gradient: "from-amber-700/80 to-amber-600/40",
+    emoji: "👞",
+  },
+]
+
 export default function HomePage() {
-  const [heroImage, setHeroImage] = useState<string | null>(null)
+  // ─── Hero Carousel State ─────────────────────────────
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
+  }, [])
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
+  }, [])
 
   useEffect(() => {
-    // Fetch from API instead of localStorage
+    if (!isPaused) {
+      intervalRef.current = setInterval(nextSlide, 5000)
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [isPaused, nextSlide])
+
+  // ─── Hero Images ─────────────────────────────────────
+  const [heroImages, setHeroImages] = useState<string[]>([])
+
+  useEffect(() => {
     const fetchSettings = async () => {
       try {
         const res = await fetch("/api/settings")
         const data = await res.json()
-        if (data.success && data.data.heroImage) {
-          setHeroImage(data.data.heroImage)
+        if (data.success && data.data.heroImages && data.data.heroImages.length > 0) {
+          setHeroImages(data.data.heroImages)
         }
       } catch (error) {
         console.error("Failed to fetch settings:", error)
@@ -28,114 +112,185 @@ export default function HomePage() {
     fetchSettings()
   }, [])
 
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  // ─── Featured Products ───────────────────────────────
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [activeTab, setActiveTab] = useState<"best" | "new">("best")
 
   useEffect(() => {
-    const fetchFeatured = async () => {
+    const fetchProducts = async () => {
       try {
-        const res = await fetch('/api/products?featured=true')
+        const res = await fetch("/api/products")
         const data = await res.json()
         if (data.success) {
-          setFeaturedProducts(data.data.slice(0, 4))
+          setAllProducts(data.data)
         }
       } catch (error) {
-        console.error("Failed to fetch featured products", error)
+        console.error("Failed to fetch products", error)
       }
     }
-    fetchFeatured()
+    fetchProducts()
   }, [])
+
+  const bestSellers = allProducts.filter((p) => p.featured).slice(0, 4)
+  const newArrivals = [...allProducts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 4)
+  const displayProducts = activeTab === "best" ? bestSellers : newArrivals
+
+  const slide = heroSlides[currentSlide]
 
   return (
     <div className="min-h-screen">
-      <section className="relative bg-gradient-to-br from-primary/5 via-background to-secondary/5 min-h-[100svh] flex items-center overflow-hidden pt-24 pb-12 sm:pt-32 sm:pb-16 lg:pt-40 lg:pb-24">
-        {/* Decorative Pattern - Hidden on mobile */}
-        <div className="absolute inset-0 opacity-5 hidden sm:block">
-          <div className="absolute top-10 left-10 w-32 h-32 lg:w-64 lg:h-64 border border-primary rounded-full" />
-          <div className="absolute bottom-10 right-10 w-48 h-48 lg:w-96 lg:h-96 border border-secondary rounded-full" />
+      {/* ═══════════ HERO CAROUSEL ═══════════ */}
+      <section
+        className="relative min-h-[100svh] flex items-center overflow-hidden"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        {/* Background — placeholder or admin image */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 hidden md:block">
+           {/* Fallback pattern when transparent */}
+        </div>
+        <div className="absolute inset-0 transition-opacity duration-1000">
+          {heroImages.length > 0 && (
+            <img 
+              src={heroImages[currentSlide % heroImages.length]} 
+              key={currentSlide % heroImages.length}
+              alt="Khanana Heritage Collection" 
+              className="w-full h-full object-cover animate-in fade-in duration-1000" 
+            />
+          )}
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-            {/* Hero Content */}
-            <div className="text-center lg:text-left order-2 lg:order-1">
-              <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-secondary/20 text-secondary-foreground rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
-                Authentic Pashtun Heritage
-              </span>
+        {/* Gradient overlay per slide */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-foreground mb-3 sm:mb-4 leading-tight">
-                <span className="text-primary">Khanana</span>
-                <br />
-                <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-normal text-muted-foreground">
-                  The Essence of Original Wool
-                </span>
-              </h1>
+        {/* Decorative circles */}
+        <div className="absolute inset-0 opacity-[0.03] hidden sm:block pointer-events-none">
+          <div className="absolute top-10 left-10 w-32 h-32 lg:w-64 lg:h-64 border border-white rounded-full" />
+          <div className="absolute bottom-10 right-10 w-48 h-48 lg:w-96 lg:h-96 border border-white rounded-full" />
+        </div>
 
-              <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mb-4 sm:mb-6 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-                Discover exquisite handwoven Pathan shawls from the heart of Khyber Pakhtunkhwa. Each piece tells a
-                story of tradition, culture, and unparalleled craftsmanship.
-              </p>
+        {/* Slide Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40 w-full">
+          <div className="max-w-xl">
+            <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4 border border-white/10">
+              {slide.badge}
+            </span>
 
-              <div className="flex items-center justify-center lg:justify-start gap-2 mb-4 sm:mb-6">
-                <span className="inline-flex items-center px-2 py-1 sm:px-3 sm:py-1.5 bg-green-500/10 text-green-600 rounded-full text-xs sm:text-sm font-medium">
-                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1.5 sm:mr-2 animate-pulse" />
-                  Available 24/7
-                </span>
-              </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-white mb-3 sm:mb-4 leading-tight whitespace-pre-line drop-shadow-lg">
+              {slide.headline}
+            </h1>
 
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center lg:justify-start">
-                <Link href="/products" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 sm:px-6 h-10 sm:h-12 text-sm sm:text-base font-semibold w-full"
-                  >
-                    Explore Collection
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-                <Link href="/about" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="px-4 sm:px-6 h-10 sm:h-12 text-sm sm:text-base font-semibold border-2 border-primary text-primary hover:bg-primary/5 bg-transparent w-full"
-                  >
-                    Our Story
-                  </Button>
-                </Link>
-              </div>
+            <p className="text-sm sm:text-base lg:text-lg text-white/85 mb-6 sm:mb-8 max-w-lg leading-relaxed drop-shadow-md">
+              {slide.sub}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Link href={slide.href}>
+                <Button
+                  size="lg"
+                  className="bg-white text-primary hover:bg-white/90 px-5 sm:px-8 h-11 sm:h-13 text-sm sm:text-base font-semibold shadow-xl w-full sm:w-auto"
+                >
+                  {slide.cta}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/products">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-white/50 text-white hover:bg-white/10 px-5 sm:px-8 h-11 sm:h-13 text-sm sm:text-base font-semibold bg-transparent w-full sm:w-auto"
+                >
+                  View All Products
+                </Button>
+              </Link>
             </div>
+          </div>
+        </div>
 
-            <div className="relative order-1 lg:order-2 flex justify-center">
-              <div className="bg-muted rounded-xl sm:rounded-2xl lg:rounded-3xl w-full max-w-sm lg:max-w-md aspect-[4/4] flex flex-col items-center justify-center border-2 border-dashed border-border overflow-hidden relative">
-                {heroImage ? (
-                  <img src={heroImage} alt="Hero" className="w-full h-full object-cover" />
-                ) : (
-                  <>
-                    <ImageIcon className="w-10 h-10 sm:w-14 sm:h-14 lg:w-20 lg:h-20 text-muted-foreground/30 mb-2 sm:mb-3" />
-                    <p className="text-muted-foreground/50 text-center px-4 text-xs sm:text-sm lg:text-base">
-                      Hero Image
-                      <br />
-                      <span className="text-xs">(Admin will add)</span>
+        {/* Navigation Arrows */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-2 sm:left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/15 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 border border-white/10"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute right-2 sm:right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/15 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 border border-white/10"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+
+        {/* Dot Indicators */}
+        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-3">
+          {heroSlides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`transition-all duration-300 rounded-full ${idx === currentSlide
+                ? "w-8 sm:w-10 h-2.5 sm:h-3 bg-white"
+                : "w-2.5 sm:w-3 h-2.5 sm:h-3 bg-white/40 hover:bg-white/60"
+                }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════ SHOP BY CATEGORY ═══════════ */}
+      <section className="py-8 sm:py-12 lg:py-20 bg-card">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6 sm:mb-8 lg:mb-12">
+            <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-secondary/20 text-secondary-foreground rounded-full text-xs sm:text-sm font-medium mb-2 sm:mb-3 lg:mb-4">
+              Shop by Category
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-serif font-bold text-foreground mb-2 sm:mb-3 lg:mb-4">
+              Explore Our Collections
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-xs sm:text-sm lg:text-base">
+              Three pillars of Pashtun heritage — each handcrafted with generations of mastery
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 lg:gap-8">
+            {categories.map((cat) => (
+              <Link key={cat.key} href={cat.href} className="group">
+                <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-muted aspect-[4/5] flex flex-col items-end justify-end border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+                  <div className={`absolute inset-0 bg-gradient-to-t ${cat.gradient} opacity-80 group-hover:opacity-90 transition-opacity duration-500`} />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-20 group-hover:opacity-30 transition-opacity">
+                    <span className="text-[120px] sm:text-[100px] lg:text-[140px]">{cat.emoji}</span>
+                  </div>
+                  <div className="relative z-10 p-4 sm:p-5 lg:p-6 w-full">
+                    <h3 className="font-serif font-bold text-white text-lg sm:text-xl lg:text-2xl mb-1 sm:mb-2 drop-shadow-lg">
+                      {cat.headline}
+                    </h3>
+                    <p className="text-white/80 text-xs sm:text-sm lg:text-base mb-3 sm:mb-4 drop-shadow-md leading-relaxed">
+                      {cat.sub}
                     </p>
-                  </>
-                )}
-              </div>
-              {/* Decorative Badge */}
-              <div className="absolute -bottom-2 -left-2 sm:-bottom-3 sm:-left-3 lg:-bottom-4 lg:-left-4 bg-secondary text-secondary-foreground px-3 py-1.5 sm:px-4 sm:py-2 lg:px-6 lg:py-3 rounded-lg sm:rounded-xl shadow-lg">
-                <span className="font-serif font-bold text-xs sm:text-sm lg:text-lg">Since 2020</span>
-              </div>
-            </div>
+                    <div className="flex items-center text-white font-medium text-sm group-hover:gap-3 gap-2 transition-all duration-300">
+                      Shop {cat.name.split(" ")[0]}
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="py-8 sm:py-12 lg:py-20 bg-card">
+      {/* ═══════════ TRUST BADGES ═══════════ */}
+      <section className="py-8 sm:py-12 lg:py-16 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-8">
             {[
-              { icon: Sparkles, title: "Handcrafted", desc: "Traditional techniques" },
-              { icon: Award, title: "Premium Quality", desc: "Finest wool materials" },
+              { icon: Sparkles, title: "Master Artisans", desc: "Of KPK" },
+              { icon: Leaf, title: "100% Natural", desc: "& Authentic" },
+              { icon: HeartHandshake, title: "Fair Trade", desc: "Certified" },
               { icon: Truck, title: "Free Delivery", desc: "Across Pakistan" },
-              { icon: HeartHandshake, title: "Satisfaction", desc: "Easy returns policy" },
+              { icon: Award, title: "Easy Returns", desc: "No Questions" },
             ].map((feature, index) => (
               <div key={index} className="text-center p-3 sm:p-4 lg:p-6">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-primary/10 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 lg:mb-4">
@@ -151,42 +306,77 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-8 sm:py-12 lg:py-20 bg-background">
+      {/* ═══════════ FEATURED COLLECTIONS (TABBED) ═══════════ */}
+      <section className="py-8 sm:py-12 lg:py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-8 lg:mb-12">
             <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-secondary/20 text-secondary-foreground rounded-full text-xs sm:text-sm font-medium mb-2 sm:mb-3 lg:mb-4">
               Featured Collection
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-serif font-bold text-foreground mb-2 sm:mb-3 lg:mb-4">
-              Our Finest Shawls
+            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-serif font-bold text-foreground mb-4 sm:mb-6">
+              Our Finest Pieces
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-xs sm:text-sm lg:text-base">
-              Explore our most popular and beautifully crafted shawls
-            </p>
+
+            {/* Tabs */}
+            <div className="inline-flex bg-card rounded-xl p-1 border border-border/50 shadow-sm">
+              <button
+                onClick={() => setActiveTab("best")}
+                className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${activeTab === "best"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                Best Sellers
+              </button>
+              <button
+                onClick={() => setActiveTab("new")}
+                className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${activeTab === "new"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                New Arrivals
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8 lg:mb-12">
-            {featuredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-muted rounded-lg sm:rounded-xl lg:rounded-2xl aspect-[3/4] flex flex-col items-center justify-center border-2 border-dashed border-border overflow-hidden relative group"
-              >
-                {product.image ? (
-                  <img src={product.image} alt={product.imageAlt} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
-                ) : (
-                  <>
-                    <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-16 lg:h-16 text-muted-foreground/30 mb-1 sm:mb-2 lg:mb-3" />
-                    <p className="text-muted-foreground/50 text-xs sm:text-sm">{product.name}</p>
-                  </>
-                )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-white font-serif font-bold text-lg">Rs {product.discountedPrice}</span>
+            {displayProducts.map((product) => (
+              <Link key={product.id} href={`/products/${product.id}`} className="group">
+                <div className="bg-muted rounded-lg sm:rounded-xl lg:rounded-2xl aspect-[3/4] flex flex-col items-center justify-center border border-border/50 overflow-hidden relative">
+                  {product.images && product.images.length > 0 ? (
+                    <img
+                      src={product.images[0]}
+                      alt={product.imageAlt || product.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/40">
+                      <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 lg:w-16 lg:h-16 mb-1 sm:mb-2 lg:mb-3" />
+                      <p className="text-xs sm:text-sm text-center px-2">{product.name}</p>
+                    </div>
+                  )}
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  {/* Category badge */}
+                  <span className={`absolute top-2 left-2 sm:top-3 sm:left-3 text-white text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full ${product.category === "shawl" ? "bg-emerald-600" : product.category === "cloth" ? "bg-blue-600" : "bg-amber-600"
+                    }`}>
+                    {product.category === "shawl" ? "Shawl" : product.category === "cloth" ? "Cloth" : "Chappal"}
+                  </span>
+
+                  {/* Price overlay on hover */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p className="text-white font-serif font-bold text-sm sm:text-base lg:text-lg truncate">{product.name}</p>
+                    <p className="text-white/80 text-xs sm:text-sm">Rs {product.discountedPrice.toLocaleString()}</p>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
-            {featuredProducts.length === 0 && (
-              <div className="col-span-full text-center text-muted-foreground">
-                No featured products found.
+            {displayProducts.length === 0 && (
+              <div className="col-span-full text-center text-muted-foreground py-12">
+                No products found.
               </div>
             )}
           </div>
@@ -205,19 +395,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Reviews Slider Section */}
+      {/* ═══════════ REVIEWS ═══════════ */}
       <ReviewsSlider />
 
-      {/* About Khanana Section */}
+      {/* ═══════════ ABOUT TEASER ═══════════ */}
       <section className="py-8 sm:py-12 lg:py-20 bg-primary/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-
             <div className="bg-muted rounded-xl sm:rounded-2xl lg:rounded-3xl w-full aspect-square flex flex-col items-center justify-center border-2 border-dashed border-border overflow-hidden relative">
               <AboutImage />
             </div>
-
-            {/* Content */}
             <div className="text-center lg:text-left">
               <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 bg-secondary/20 text-secondary-foreground rounded-full text-xs sm:text-sm font-medium mb-2 sm:mb-3 lg:mb-4">
                 About Khanana
@@ -226,8 +413,8 @@ export default function HomePage() {
                 From Tradition to Elegance
               </h2>
               <p className="text-muted-foreground mb-4 sm:mb-6 leading-relaxed text-xs sm:text-sm lg:text-base">
-                Khanana is dedicated to preserving the rich heritage of Khyber Pakhtunkhwa. Our shawls are crafted by
-                skilled artisans using techniques passed down through generations.
+                Khanana preserves the rich heritage of Khyber Pakhtunkhwa through handcrafted shawls, traditional cloth,
+                and artisanal chappal. Every piece is a connection to centuries of culture and craftsmanship.
               </p>
               <Link href="/about">
                 <Button
@@ -235,7 +422,7 @@ export default function HomePage() {
                   size="lg"
                   className="border-2 border-primary text-primary hover:bg-primary/5 bg-transparent text-sm sm:text-base"
                 >
-                  Learn More
+                  Read Our Story
                   <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 ml-2" />
                 </Button>
               </Link>
@@ -244,6 +431,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ═══════════ CTA ═══════════ */}
       <section className="py-8 sm:py-12 lg:py-20 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">

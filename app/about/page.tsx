@@ -16,7 +16,7 @@ export default function AboutPage() {
               About Khanana
             </h1>
             <p className="text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto text-pretty">
-              Preserving authentic Pashtun heritage through handwoven Pathan shawls crafted with passion and tradition.
+              Preserving authentic Pashtun heritage through handcrafted shawls, traditional cloth, and artisanal chappal from Khyber Pakhtunkhwa.
             </p>
           </div>
         </div>
@@ -33,10 +33,10 @@ export default function AboutPage() {
               <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
                 Khanana was founded with a mission to celebrate and preserve the rich heritage of Pashtun craftsmanship.
                 For generations, skilled artisans in Khyber Pakhtunkhwa have perfected the art of weaving traditional
-                Pathan shawls, creating pieces that tell stories of culture, tradition, and excellence.
+                shawls, crafting fine cloth, and making iconic Peshawari chappal — creating pieces that tell stories of culture, tradition, and excellence.
               </p>
               <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
-                We believe that every shawl is more than just a garment—it's a connection to heritage, a symbol of
+                We believe that every piece is more than just a product — it's a connection to heritage, a symbol of
                 identity, and a testament to the dedication of our master craftsmen.
               </p>
               <p className="text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed hidden sm:block">
@@ -168,7 +168,7 @@ export default function AboutPage() {
             Join the Khanana Community
           </h2>
           <p className="text-sm sm:text-base lg:text-lg mb-4 sm:mb-6 lg:mb-8 text-pretty opacity-90">
-            Discover authentic Pathan shawls and become part of a movement to preserve cultural heritage.
+            Discover authentic Pashtun shawls, cloth, and chappal — become part of a movement to preserve cultural heritage.
           </p>
           <Link href="/products">
             <Button
